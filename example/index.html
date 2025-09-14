@@ -1,0 +1,116 @@
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="HandheldFriendly" content="true" />
+
+    <title>ImageZoom.js - EldinoCodes</title>
+
+    <link rel="icon" class="js-site-favicon" type="image/svg+xml" href="https://github.githubassets.com/favicons/favicon-dark.svg" data-base-href="https://github.githubassets.com/favicons/favicon">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <style>
+        body {
+            display: grid;
+            grid-template-rows: 50px 1fr 50px;
+            grid-template-areas:
+                "topnav"
+                "main"
+                "bottomnav";
+        }
+
+        #top-nav {
+            grid-area: topnav;
+        }
+
+        #main {
+            grid-area: main;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            grid-template-areas:
+                "imageselector"
+                "imageframe"
+                "imagecontrols";
+        }
+
+        #bottom-nav {
+            grid-area: bottomnav;
+        }
+
+        #image {
+            grid-area: imageframe;
+            width: 100%;
+            height: 100%;
+        }
+        #imageControls {
+            grid-area: imagecontrols;
+        }
+
+        #imageSelector {
+            grid-area: imageselector;
+        }
+            #imageSelector img {
+                max-width: 100px;
+                max-height: 100px;
+            }
+
+
+    </style>
+</head>
+<body>
+    <header id="top-nav" class="border-bottom">
+        <nav class="navbar">
+            <div class="container justify-content-between">                
+                <h2>EldinoCodes</h2>
+                <h3>ImageZoom.js</h3>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a href="https://github.com/EldinoCodes/ImageZoom" class="nav-link" target="_blank">View on GitHub</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main" role="main" class="container">
+        <div id="imageSelector" class="d-flex justify-content-around">
+            <img src="sample1.png" alt="Sample Image 1" />
+            <img src="sample2.png" alt="Sample Image 2" />
+            <img src="sample3.png" alt="Sample Image 3" />
+        </div>
+        <img id="image" class="mx-auto border" src="sample1.png" alt="Sample Image" />
+        <div id="imageControls" class="d-flex justify-content-center">
+            <button id="zoomOut" class="btn btn-sm btn-secondary" onclick="imageZoom.zoomOut()">-</button>
+            &nbsp;
+            <button id="zoom" class="btn btn-sm btn-secondary" onclick="imageZoom.zoom(0)">&#x21bb;</button>
+            &nbsp;
+            <button id="zoomIn" class="btn btn-sm btn-secondary" onclick="imageZoom.zoomIn()">+</button>
+        </div>
+    </main>
+
+    <footer id="bottom-nav" class="border-top fixed-bottom py-1">
+        <div class="container">
+            &copy;  <span id="footerYear"></span> - EldinoCodes
+            <span class="px-1">|</span>
+            Released under the <a href="https://github.com/EldinoCodes/ImageZoom/blob/main/LICENSE" alt="MIT License" target="_blank">MIT license</a>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="../src/ImageZoom.js"></script>
+    <script>
+        let element = document.querySelector("#image"),
+            imageZoom = window.imageZoom(element);
+        document
+            .querySelectorAll("#imageSelector img")
+            .forEach((img, index) => {
+                img.addEventListener("click", () => {
+                    imageZoom.image(img.src);
+                });
+            });
+
+        document.querySelector("#footerYear").innerHTML = new Date().getFullYear();
+    </script>
+</body>
+</html>
