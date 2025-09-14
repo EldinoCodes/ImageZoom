@@ -149,9 +149,9 @@
                 fns.imageUpdate();
             },
             imageCenter: () => {
-                // TODO: improve centering when image is larger than frame
                 vars.imagePosition.x = (vars.frameDimensions.width - vars.zoomDimensions.width) / 2;
                 vars.imagePosition.y = (vars.frameDimensions.height - vars.zoomDimensions.height) / 2;
+                fns.imageUpdate();
             },
             imageZoom: (level) => {
                 if (level < 0) level = Math.max(level, opts.minZoom);
