@@ -1,7 +1,8 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <meta name="format-detection" content="telephone=no" />
     <meta name="HandheldFriendly" content="true" />
 
@@ -13,11 +14,14 @@
     <style>
         body {
             display: grid;
-            grid-template-rows: 50px 1fr 50px;
+            grid-template-rows: auto 1fr auto;
             grid-template-areas:
                 "topnav"
                 "main"
                 "bottomnav";
+            width: 100vw;
+            height: 100vh;
+            padding-bottom:50px;
         }
 
         #top-nav {
@@ -28,10 +32,7 @@
             grid-area: main;
             display: grid;
             grid-template-rows: auto 1fr auto;
-            grid-template-areas:
-                "imageselector"
-                "imageframe"
-                "imagecontrols";
+            grid-template-areas: "imageselector" "image" "imagecontrols";
         }
 
         #bottom-nav {
@@ -39,10 +40,11 @@
         }
 
         #image {
-            grid-area: imageframe;
+            grid-area: image;
             width: 100%;
             height: 100%;
         }
+
         #imageControls {
             grid-area: imagecontrols;
         }
@@ -50,12 +52,11 @@
         #imageSelector {
             grid-area: imageselector;
         }
+
             #imageSelector img {
                 max-width: 100px;
                 max-height: 100px;
             }
-
-
     </style>
 </head>
 <body>
@@ -64,11 +65,6 @@
             <div class="container justify-content-between">                
                 <h2>EldinoCodes</h2>
                 <h3>ImageZoom.js</h3>
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a href="https://github.com/EldinoCodes/ImageZoom" class="nav-link" target="_blank">View on GitHub</a>
-                    </li>
-                </ul>
             </div>
         </nav>
     </header>
@@ -93,7 +89,9 @@
         <div class="container">
             &copy;  <span id="footerYear"></span> - EldinoCodes
             <span class="px-1">|</span>
-            Released under the <a href="https://github.com/EldinoCodes/ImageZoom/blob/main/LICENSE" alt="MIT License" target="_blank">MIT license</a>
+            <a href="https://github.com/EldinoCodes/ImageZoom" alt="View Source on GitHub" target="_blank">Source</a>
+            <span class="px-1">|</span>
+            <a href="https://github.com/EldinoCodes/ImageZoom/blob/main/LICENSE" alt="MIT License" target="_blank">MIT license</a>
         </div>
     </footer>
 
@@ -109,6 +107,7 @@
                     imageZoom.image(img.src);
                 });
             });
+
 
         document.querySelector("#footerYear").innerHTML = new Date().getFullYear();
     </script>

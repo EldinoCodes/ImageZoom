@@ -33,6 +33,7 @@
         vars = {
             frame: undefined,                           // our main element
             frameState: undefined,                      // store initial element state for destroy
+            frameObserver: undefined,                   // resize observer for frame
             frameDimensions: { width: 0, height: 0 },   // frame dimensions to calculate image size
             imageDimensions: { width: 0, height: 0 },   // raw image dimensions
             baseDimensions: { width: 0, height: 0 },    // base image dimensions (size to make image fit frame) as zoom level 0
@@ -79,6 +80,7 @@
                 vars.frame.src = emptySvgUri;
 
                 fns.frameDimensions();
+                fns.frameResize();
             },            
             frameState: () => {
                 vars.frameState = {
@@ -89,12 +91,20 @@
                     backgroundRepeat: vars.frame.style.backgroundRepeat
                 };
             },
-            frameDimensions: () => {
-                let rect = vars.frame.getBoundingClientRect();
+            frameDimensions: (rect) => {
+                rect = rect || vars.frame.getBoundingClientRect();
                 vars.frameDimensions = {
                     width: rect.width,
                     height: rect.height
                 }
+            },
+            frameResize: () => {
+                vars.frameObserver = new ResizeObserver((entries) => {
+                    if (entries[0].target !== vars.frame) return;
+                    fns.frameDimensions(entries[0].contentRect);
+                    fns.imageUpdate();
+                });
+                vars.frameObserver.observe(vars.frame);
             },
             frameDestroy: () => {
                 vars.frame.src = vars.frameState.src;
@@ -103,9 +113,11 @@
                 vars.frame.style.backgroundPosition = vars.frameState.backgroundPosition;
                 vars.frame.style.backgroundRepeat = vars.frameState.backgroundRepeat;
 
+                vars.frameObserver.unobserve(vars.frame);
+
                 fns.unbindMouse();
                 fns.unbindTouch();
-                fns.unbindWheel();
+                fns.unbindWheel();                
             },
             frameRebuild: () => {
                 fns.frameDestroy();
@@ -124,21 +136,7 @@
                         width: this.naturalWidth,
                         height: this.naturalHeight
                     };
-                    if (vars.imageDimensions.width > vars.imageDimensions.height) {
-                        //landscape
-                        vars.baseDimensions.height = (vars.imageDimensions.height / vars.imageDimensions.width) * vars.frameDimensions.width;
-                        vars.baseDimensions.width = vars.frameDimensions.width;
-                    } else {
-                        // portrait
-                        vars.baseDimensions.width = (vars.imageDimensions.width / vars.imageDimensions.height) * vars.frameDimensions.height;
-                        vars.baseDimensions.height = vars.frameDimensions.height;
-                    }
-                    vars.zoomDimensions = {
-                        width: vars.baseDimensions.width,
-                        height: vars.baseDimensions.height
-                    };
-                    vars.zoomLevel = 0;
-                    fns.imageUpdate();
+                    fns.imageFit();
                 };
                 img.src = opts.imageUrl;
             },
@@ -151,6 +149,23 @@
             imageCenter: () => {
                 vars.imagePosition.x = (vars.frameDimensions.width - vars.zoomDimensions.width) / 2;
                 vars.imagePosition.y = (vars.frameDimensions.height - vars.zoomDimensions.height) / 2;
+                fns.imageUpdate();
+            },
+            imageFit: () => {
+                if (vars.imageDimensions.width > vars.imageDimensions.height) {
+                    //landscape
+                    vars.baseDimensions.height = (vars.imageDimensions.height / vars.imageDimensions.width) * vars.frameDimensions.width;
+                    vars.baseDimensions.width = vars.frameDimensions.width;
+                } else {
+                    // portrait
+                    vars.baseDimensions.width = (vars.imageDimensions.width / vars.imageDimensions.height) * vars.frameDimensions.height;
+                    vars.baseDimensions.height = vars.frameDimensions.height;
+                }
+                vars.zoomDimensions = {
+                    width: vars.baseDimensions.width,
+                    height: vars.baseDimensions.height
+                };
+                vars.zoomLevel = 0;
                 fns.imageUpdate();
             },
             imageZoom: (level) => {
@@ -217,17 +232,18 @@
 
             bindMouse: () => {
                 if (!opts.mouseDrag) return;
-                vars.frame.addEventListener('mousedown', fns.onMouseDown);
+                vars.frame.addEventListener('mousedown', fns.onMouseDown, { passive: false });
             },
             onMouseDown: (e) => {
                 e.preventDefault();
                 vars.dragPosition = e;
                 vars.frame.style.cursor = 'grabbing';
-                document.addEventListener('mousemove', fns.onMouseMove);
-                document.addEventListener('mouseup', fns.onMouseUp);
+                document.addEventListener('mousemove', fns.onMouseMove, { passive: false });
+                document.addEventListener('mouseup', fns.onMouseUp, { passive: false });
             },
             onMouseMove: (e) => {
                 e.preventDefault();
+                if (!vars.dragPosition) return;
                 vars.imagePosition.x += (e.pageX - vars.dragPosition.pageX);
                 vars.imagePosition.y += (e.pageY - vars.dragPosition.pageY);
                 vars.dragPosition = e;
@@ -236,11 +252,11 @@
             onMouseUp: (e) => {
                 vars.dragPosition = undefined;
                 vars.frame.style.cursor = 'initial';
-                document.removeEventListener('mouseup', fns.onMouseUp);
-                document.removeEventListener('mousemove', fns.onMouseMove);
+                document.removeEventListener('mouseup', fns.onMouseUp, { passive: false });
+                document.removeEventListener('mousemove', fns.onMouseMove, { passive: false });
             },
             unbindMouse: () => {
-                vars.frame.removeEventListener('mousedown', fns.onMouseDown);
+                vars.frame.removeEventListener('mousedown', fns.onMouseDown, { passive: false });
             },
 
             bindTouch: () => {
@@ -250,18 +266,22 @@
             onTouchStart: (e) => {
                 e.preventDefault();
                 vars.dragPosition = e.touches[0];
+                if (e.touches.length == 2)
+                {
+                    debugger;
+                }
                 document.addEventListener('touchmove', fns.onTouchMove, { passive: false });
                 document.addEventListener('touchend', fns.onTouchEnd, { passive: false });
             },
             onTouchMove: (e) => {
                 e.preventDefault();
+                if (!vars.dragPosition) return;
                 if (e.touches.length == 2)
                 {
                     var dist = Math.hypot(
                         e.touches[0].pageX - e.touches[1].pageX,
                         e.touches[0].pageY - e.touches[1].pageY
                     );
-                    console.info(dist);
                 } else {
                     let touch = e.touches[0];
                     vars.imagePosition.x += (touch.pageX - vars.dragPosition.pageX);
@@ -281,7 +301,7 @@
 
             bindWheel: () => {
                 if (!opts.wheelZoom) return;
-                vars.frame.addEventListener('wheel', fns.onWheel);
+                vars.frame.addEventListener('wheel', fns.onWheel, { passive: false });
             },
             onWheel: (e) => {
                 let delta = e.deltaY || -e.wheelDelta || 0;
@@ -297,14 +317,13 @@
                 zoomLevel += delta < 0 ? 1 : -1;
 
                 fns.imageZoom(zoomLevel);
-
-                vars.imagePosition.x = offsetX - (vars.zoomDimensions.width * ratioX);
-                vars.imagePosition.y = offsetY - (vars.zoomDimensions.height * ratioY);
-
-                fns.imageUpdate();
+                fns.imagePosition(
+                    offsetX - (vars.zoomDimensions.width * ratioX),
+                    offsetY - (vars.zoomDimensions.height * ratioY)
+                );
             },
             unbindWheel: () => {
-                vars.frame.removeEventListener('wheel', fns.onWheel);
+                vars.frame.removeEventListener('wheel', fns.onWheel, { passive: false });
             }
 
             /* will add pinch binding next */
@@ -319,6 +338,7 @@
             zoom: fns.imageZoom,
             zoomIn: fns.imageZoomIn,
             zoomOut: fns.imageZoomOut,
+            zoomFit: fns.imageFit,
             position: fns.imagePosition,
             rebuild: fns.frameRebuild,
             destroy: fns.frameDestroy
