@@ -140,12 +140,6 @@
                 };
                 img.src = opts.imageUrl;
             },
-            imagePosition: (x, y) =>  {
-                vars.imagePosition.x = x;
-                vars.imagePosition.y = y;
-
-                fns.imageUpdate();
-            },
             imageCenter: () => {
                 vars.imagePosition.x = (vars.frameDimensions.width - vars.zoomDimensions.width) / 2;
                 vars.imagePosition.y = (vars.frameDimensions.height - vars.zoomDimensions.height) / 2;
@@ -168,11 +162,20 @@
                 vars.zoomLevel = 0;
                 fns.imageUpdate();
             },
-            imageZoom: (level) => {
+            imageZoom: (level, x, y) => {
                 if (level < 0) level = Math.max(level, opts.minZoom);
                 if (level > 0) level = Math.min(level, opts.maxZoom);
-                let width = vars.baseDimensions.width,
+
+                x = x || (vars.frameDimensions.width / 2);
+                y = y || (vars.frameDimensions.height / 2);
+
+                let offsetX = x - window.scrollX,
+                    offsetY = y - window.scrollY,
+                    ratioX = (offsetX - vars.imagePosition.x) / vars.zoomDimensions.width,
+                    ratioY = (offsetY - vars.imagePosition.y) / vars.zoomDimensions.height,
+                    width = vars.baseDimensions.width,
                     height = vars.baseDimensions.height;
+
                 for (let i = 1; i <= Math.abs(level); i++)
                 {
                     let rate = level < 0 ? -opts.zoomRate : opts.zoomRate;
@@ -183,15 +186,16 @@
                 vars.zoomDimensions.width = width;
                 vars.zoomDimensions.height = height;
 
+                vars.imagePosition.x = offsetX - (vars.zoomDimensions.width * ratioX);
+                vars.imagePosition.y = offsetY - (vars.zoomDimensions.height * ratioY);
+
                 fns.imageUpdate();
             },
             imageZoomIn: () => {
                 fns.imageZoom(vars.zoomLevel + 1);
-                fns.imageCenter();
             },
             imageZoomOut: () => {
                 fns.imageZoom(vars.zoomLevel - 1);
-                fns.imageCenter();
             },
             imageUpdate: () => {
                 let minX = vars.frameDimensions.width - vars.zoomDimensions.width,
@@ -266,10 +270,6 @@
             onTouchStart: (e) => {
                 e.preventDefault();
                 vars.dragPosition = e.touches[0];
-                if (e.touches.length == 2)
-                {
-                    debugger;
-                }
                 document.addEventListener('touchmove', fns.onTouchMove, { passive: false });
                 document.addEventListener('touchend', fns.onTouchEnd, { passive: false });
             },
@@ -308,19 +308,9 @@
                 if (delta === 0) return;
 
                 let rect = vars.frame.getBoundingClientRect(),
-                    offsetX = e.pageX - rect.left - window.scrollX,
-                    offsetY = e.pageY - rect.top - window.scrollY,
-                    ratioX = (offsetX - vars.imagePosition.x) / vars.zoomDimensions.width,
-                    ratioY = (offsetY - vars.imagePosition.y) / vars.zoomDimensions.height,
-                    zoomLevel = vars.zoomLevel;
+                    zoomLevel = vars.zoomLevel += delta < 0 ? 1 : -1;
 
-                zoomLevel += delta < 0 ? 1 : -1;
-
-                fns.imageZoom(zoomLevel);
-                fns.imagePosition(
-                    offsetX - (vars.zoomDimensions.width * ratioX),
-                    offsetY - (vars.zoomDimensions.height * ratioY)
-                );
+                fns.imageZoom(zoomLevel, e.pageX - rect.left, e.pageY - rect.top);
             },
             unbindWheel: () => {
                 vars.frame.removeEventListener('wheel', fns.onWheel, { passive: false });
