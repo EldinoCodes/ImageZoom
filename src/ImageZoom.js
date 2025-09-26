@@ -280,7 +280,7 @@
                 if (!vars.dragPosition) return;
                 if (e.touches.length == 2)
                 {
-                    let previousHyp = Math.hypot(vars.dragPosition.pageX - vars.pinchPosition.pageX, vars.dragPosition.pageY - vars.pinchPosition.pageY);
+                    let previousHyp = Math.hypot(vars.dragPosition.pageX - vars.pinchPosition.pageX, vars.dragPosition.pageY - vars.pinchPosition.pageY),
                         currentHyp = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
 
                     let zoomLevel = vars.zoomLevel += currentHyp < previousHyp ? -1 : 1;
