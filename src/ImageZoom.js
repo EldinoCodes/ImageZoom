@@ -285,7 +285,7 @@
 
                     let zoomLevel = vars.zoomLevel += currentHyp < previousHyp ? -1 : 1;
 
-                    fns.imageZoom(zoomLevel, (e.touches[0].pageX - e.touches[1].pageX) / 2, (e.touches[0].pageY - e.touches[1].pageY) / 2);
+                    fns.imageZoom(zoomLevel, (e.touches[0].pageX + e.touches[1].pageX) / 2, (e.touches[0].pageY + e.touches[1].pageY) / 2);
 
                 } else {
                     let touch = e.touches[0];
