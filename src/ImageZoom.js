@@ -40,6 +40,7 @@
             zoomDimensions: { width: 0, height: 0 },    // zoom image dimensions for current zoom level
             imagePosition: { x: 0, y: 0 },              // image position within frame, zeros if image is within frame
             dragPosition: undefined,                    // stores previous drag position for calculating drag movement
+            touches: [],                                // store touch points for pinch zoom
             zoomLevel: 0                                // zoom level of the image
         },
         fns = {
@@ -270,6 +271,7 @@
             onTouchStart: (e) => {
                 e.preventDefault();
                 vars.dragPosition = e.touches[0];
+                vars.pinchPosition = e.touches.length == 2 ? e.touches[1] : undefined;
                 document.addEventListener('touchmove', fns.onTouchMove, { passive: false });
                 document.addEventListener('touchend', fns.onTouchEnd, { passive: false });
             },
@@ -278,10 +280,13 @@
                 if (!vars.dragPosition) return;
                 if (e.touches.length == 2)
                 {
-                    var dist = Math.hypot(
-                        e.touches[0].pageX - e.touches[1].pageX,
-                        e.touches[0].pageY - e.touches[1].pageY
-                    );
+                    let previousHyp = Math.hypot(vars.dragPosition.pageX - vars.pinchPosition.pageX, vars.dragPosition.pageY - vars.pinchPosition.pageY);
+                        currentHyp = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+
+                    let zoomLevel = vars.zoomLevel += currentHyp < previousHyp ? -1 : 1;
+
+                    fns.imageZoom(zoomLevel, (e.touches[0].pageX - e.touches[1].pageX) / 2, (e.touches[0].pageY - e.touches[1].pageY) / 2);
+
                 } else {
                     let touch = e.touches[0];
                     vars.imagePosition.x += (touch.pageX - vars.dragPosition.pageX);
