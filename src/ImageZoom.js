@@ -202,15 +202,12 @@
                 );
             },
             imageFit: () => {
-                if (vars.imageDimensions.width > vars.imageDimensions.height) {
-                    //landscape
-                    vars.baseDimensions.height = (vars.imageDimensions.height / vars.imageDimensions.width) * vars.frameDimensions.height;
-                    vars.baseDimensions.width = vars.frameDimensions.width;
-                } else {
-                    // portrait
-                    vars.baseDimensions.width = (vars.imageDimensions.width / vars.imageDimensions.height) * vars.frameDimensions.width;
-                    vars.baseDimensions.height = vars.frameDimensions.height;
-                }
+                let scale = Math.min(
+                    vars.frameDimensions.width / vars.imageDimensions.width,
+                    vars.frameDimensions.height / vars.imageDimensions.height
+                );
+                vars.baseDimensions.height = vars.imageDimensions.height * scale;
+                vars.baseDimensions.width = vars.imageDimensions.width * scale;
                 vars.zoomDimensions = {
                     width: vars.baseDimensions.width,
                     height: vars.baseDimensions.height
