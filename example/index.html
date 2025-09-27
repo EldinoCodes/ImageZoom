@@ -99,7 +99,7 @@
     <script src="../src/ImageZoom.js"></script>
     <script>
         let element = document.querySelector("#image"),
-            imageZoom = window.imageZoom(element);
+            imageZoom = new ImageZoom(element);
         document
             .querySelectorAll("#imageSelector img")
             .forEach((img, index) => {

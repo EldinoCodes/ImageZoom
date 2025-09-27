@@ -25,7 +25,7 @@
             imageUrl: undefined,
             minZoom: -20,
             maxZoom: 20,
-            zoomRate: 0.1,
+            zoomFactor: 0.1,
             mouseDrag: true,
             touchDrag: true,
             touchZoom: true,
@@ -158,11 +158,18 @@
                 };
                 img.src = opts.imageUrl;
             },
-            imageCenter: () => {
-                vars.imagePosition.x = (vars.frameDimensions.width - vars.zoomDimensions.width) / 2;
-                vars.imagePosition.y = (vars.frameDimensions.height - vars.zoomDimensions.height) / 2;
+            imagePosition: (x, y) => {
+                vars.imagePosition.x = x;
+                vars.imagePosition.y = y;
                 fns.imageUpdate();
             },
+            imageCenter: () => {
+                fns.imagePosition(
+                    (vars.frameDimensions.width - vars.zoomDimensions.width) / 2,
+                    (vars.frameDimensions.height - vars.zoomDimensions.height) / 2
+                );
+            },
+
             imageFit: () => {
                 if (vars.imageDimensions.width > vars.imageDimensions.height) {
                     //landscape
@@ -196,7 +203,7 @@
 
                 for (let i = 1; i <= Math.abs(level); i++)
                 {
-                    let rate = level < 0 ? -opts.zoomRate : opts.zoomRate;
+                    let rate = level < 0 ? -opts.zoomFactor : opts.zoomFactor;
                     width += width * rate;
                     height += height * rate;
                 }
@@ -204,10 +211,10 @@
                 vars.zoomDimensions.width = width;
                 vars.zoomDimensions.height = height;
 
-                vars.imagePosition.x = offsetX - (vars.zoomDimensions.width * ratioX);
-                vars.imagePosition.y = offsetY - (vars.zoomDimensions.height * ratioY);
-
-                fns.imageUpdate();
+                fns.imagePosition(
+                    offsetX - (vars.zoomDimensions.width * ratioX),
+                    offsetY - (vars.zoomDimensions.height * ratioY)
+                );
             },
             imageZoomIn: () => {
                 fns.imageZoom(vars.zoomLevel + 1);
@@ -339,8 +346,6 @@
             unbindWheel: () => {
                 vars.frame.removeEventListener('wheel', fns.onWheel, { passive: false });
             }
-
-            /* will add pinch binding next */
         };
 
         fns.frameInit(element);
@@ -361,3 +366,12 @@
 
     exports.imageZoom = imageZoom;
 });
+
+// class loader
+class ImageZoom {    
+    constructor(element, options) {
+        let fns = window.imageZoom(element, options);
+        for(let key in fns)
+            this[key] = fns[key];
+    }
+}
