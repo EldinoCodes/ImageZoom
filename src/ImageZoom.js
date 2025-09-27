@@ -22,14 +22,14 @@
         const emptySvgUri = `data:image/svg+xml;base64,${base64EncodedSvg}`;
 
         let opts = {
-            imageUrl: undefined,
-            minZoom: -20,
-            maxZoom: 20,
-            zoomFactor: 0.1,
-            mouseDrag: true,
-            touchDrag: true,
-            touchZoom: true,
-            wheelZoom: true
+            imageUrl: undefined,                        // url to image
+            minZoom: -20,                               // min zoom level
+            maxZoom: 20,                                // max zoom level 
+            zoomFactor: 0.1,                            // zoom factor per zoom level
+            mouseDrag: true,                            // flag to enable mouse drag
+            touchDrag: true,                            // flag to enable touch drag 
+            touchZoom: true,                            // flag to enable touch pinch zoom
+            wheelZoom: true                             // flag to enable mouse wheel zoom
         },
         vars = {
             frame: undefined,                           // our main element
@@ -45,14 +45,6 @@
             zoomLevel: 0                                // zoom level of the image
         },
         fns = {
-            isArray: o => Array.isArray(o) || (
-                o &&                                // o is not null, undefined, etc.
-                typeof o === "object" &&            // o is an object
-                isFinite(o.length) &&               // o.length is a finite number
-                o.length >= 0 &&                    // o.length is non-negative
-                o.length === Math.floor(o.length) &&  // o.length is an integer
-                o.length < 4294967296               // o.length < 2^32
-            ),
             extend: function() {
                 let s = fns, e = {}, d = false, i = 0;
                 if (Object.prototype.toString.call(arguments[0]) === '[object Boolean]') { d = arguments[0]; i++; }
@@ -110,7 +102,7 @@
 
             frameInit: (element) => {
                 if (!element) throw "Invalid ImageZoom Element!";
-                if (fns.isArray(element) || element.tagName != 'IMG') throw "Invalid ImageZoom Element!";
+                if (element instanceof NodeList || element.tagName != 'IMG') throw "Invalid ImageZoom Element!";
 
                 vars.frame = element;
                 fns.frameState();

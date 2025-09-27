@@ -1,9 +1,9 @@
 # ImageZoom
+ImageZoom.js is a simple javascript library to implement image zoom and drag.  I needed to implement an image zoom in a recent project and found that the libraries were complex and had a bunch of features I didnt need.  Frustrated, I built this little project to cover basic image zoom functionality without needing a bunch of other stuff.  
 
-## Description
-ImageZoom.js is a simple javascript library to implement image zoom and drag.  Currently this project supports mouse and touch events on both desktop and mobile platforms.  The intention is to keep this library as simple and concise as possible and not depend on any other libraries.  This is so people can read through the code and understand how it works.
+Currently this project supports mouse and touch events on both desktop and mobile platforms.  The intention is to keep this library as simple and concise as possible and not depend on any other libraries.  This is so people can read through the code and understand how it works.
 
-check out the [demo](https://eldinocodes.github.io/ImageZoom/example) for a working example.
+Check out the [demo](https://eldinocodes.github.io/ImageZoom/example) for a working example.
 
 ## Usage
 This is an example of the most basic usage for the ImageZoom.js library.
