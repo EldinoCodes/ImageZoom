@@ -44,7 +44,7 @@ The `ImageZoom` constructor accepts an options object to customize its behavior.
 The `ImageZoom` provides the following methods:
 - `image(imageUrl)`: Change the image to the specified URL.
 - `options(options)`: Update the instance options with the provided object.
-- `zoom(zoomLevel, x, y)`: Sets the zoom level between `minZoom` and `maxZoom` values, center relative to `x` and `y`.
+- `zoom(zoomLevel, x, y)`: Sets zoom level between `minZoom` and `maxZoom` values, center relative to `x` and `y`.
 - `zoomIn()`: Increases the zoom level by the `zoomFactor`.
 - `zoomOut()`: Decreases the zoom level by the `zoomFactor`.
 - `zoomFit()`: Adjusts the zoom level to fit the image within the container.
