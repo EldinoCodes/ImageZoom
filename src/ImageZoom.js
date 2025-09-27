@@ -28,6 +28,7 @@
             zoomRate: 0.1,
             mouseDrag: true,
             touchDrag: true,
+            touchZoom: true,
             wheelZoom: true
         },
         vars = {
@@ -41,6 +42,7 @@
             imagePosition: { x: 0, y: 0 },              // image position within frame, zeros if image is within frame
             dragPosition: undefined,                    // stores previous drag position for calculating drag movement
             touches: [],                                // store touch points for pinch zoom
+            touchDistance: 0,                           // distance between two touch points for pinch zoom
             zoomLevel: 0                                // zoom level of the image
         },
         fns = {
@@ -65,6 +67,21 @@
                 };
                 for (; i < arguments.length; i++)  m(arguments[i]);
                 return e;
+            },
+            getPointDistance: (point1, point2) => {
+                const dx = point2.clientX - point1.clientX;
+                const dy = point2.clientY - point1.clientY;
+                return Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+            },
+            getPointCenter: (point1, point2) => {
+                const midX = (point1.clientX + point2.clientX) / 2;
+                const midY = (point1.clientY + point2.clientY) / 2;
+                return { x: midX, y: midY };
+            },
+            getDifference: (number1, number2) => {
+                return number1 > number2
+                    ? number1 - number2
+                    : number2 - number1;
             },
 
             frameInit: (element) => {
@@ -264,34 +281,36 @@
                 vars.frame.removeEventListener('mousedown', fns.onMouseDown, { passive: false });
             },
 
-            bindTouch: () => {
-                if (!opts.touchDrag) return;
+            bindTouch: () => {                
                 vars.frame.addEventListener("touchstart", fns.onTouchStart, { passive: false });
             },
             onTouchStart: (e) => {
                 e.preventDefault();
-                vars.dragPosition = e.touches[0];
-                vars.pinchPosition = e.touches.length == 2 ? e.touches[1] : undefined;
+                if (opts.touchDrag == true) vars.dragPosition = e.touches[0];
+
                 document.addEventListener('touchmove', fns.onTouchMove, { passive: false });
                 document.addEventListener('touchend', fns.onTouchEnd, { passive: false });
             },
             onTouchMove: (e) => {
                 e.preventDefault();
-                if (!vars.dragPosition) return;
-                if (e.touches.length == 2)
-                {
-                    let previousHyp = Math.hypot(vars.dragPosition.pageX - vars.pinchPosition.pageX, vars.dragPosition.pageY - vars.pinchPosition.pageY),
-                        currentHyp = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
 
-                    let zoomLevel = vars.zoomLevel += currentHyp < previousHyp ? -1 : 1;
+                if (opts.touchDrag && e.touches.length == 1) {
+                    let dragPosition = e.touches[0];
+                    vars.imagePosition.x += (dragPosition.pageX - vars.dragPosition.pageX);
+                    vars.imagePosition.y += (dragPosition.pageY - vars.dragPosition.pageY);
+                    vars.dragPosition = dragPosition;
+                }
+                else if (opts.touchZoom & e.touches.length == 2) {
+                    let touchDistance = fns.getPointDistance(e.touches[0], e.touches[1]),
+                        previousTouchDistance = vars.touchDistance || touchDistance;
 
-                    fns.imageZoom(zoomLevel, (e.touches[0].pageX + e.touches[1].pageX) / 2, (e.touches[0].pageY + e.touches[1].pageY) / 2);
-
-                } else {
-                    let touch = e.touches[0];
-                    vars.imagePosition.x += (touch.pageX - vars.dragPosition.pageX);
-                    vars.imagePosition.y += (touch.pageY - vars.dragPosition.pageY);
-                    vars.dragPosition = touch;
+                    if (fns.getDifference(previousTouchDistance, touchDistance) > (100 / vars.baseDimensions.width))
+                    {
+                        let midTouch = fns.getPointCenter(e.touches[0], e.touches[1]),
+                            zoomLevel = vars.zoomLevel += touchDistance > previousTouchDistance ? 1 : -1;
+                        fns.imageZoom(zoomLevel, midTouch.x, midTouch.y);
+                    }
+                    vars.touchDistance = touchDistance;
                 }
                 fns.imageUpdate();
             },
