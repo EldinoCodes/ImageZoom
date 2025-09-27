@@ -98,8 +98,16 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script src="../src/ImageZoom.js"></script>
     <script>
-        let element = document.querySelector("#image"),
-            imageZoom = new ImageZoom(element);
+        let element = document.querySelector("#image");
+            //element.addEventListener("iz.imageLoaded", function () { debugger; });
+            //element.addEventListener("iz.positionChange", function () { debugger; });
+            //element.addEventListener("iz.positionChanged", function () { debugger; });
+            //element.addEventListener("iz.zoomChange", function () { debugger; });
+            //element.addEventListener("iz.zoomChanged", function () { debugger; });
+            //element.addEventListener("iz.initialized", function () { debugger; });
+            //element.addEventListener("iz.destroyed", function () { debugger; });
+
+        let imageZoom = new ImageZoom(element);
         document
             .querySelectorAll("#imageSelector img")
             .forEach((img, index) => {
@@ -107,6 +115,7 @@
                     imageZoom.image(img.src);
                 });
             });
+
 
 
         document.querySelector("#footerYear").innerHTML = new Date().getFullYear();

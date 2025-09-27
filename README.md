@@ -21,7 +21,7 @@ This is an example of the most basic usage for the ImageZoom.js library.
 <script>
   const imgElement = document.getElementById('myImage');
   const image1 = new ImageZoom(imgElement, {
-	zoomFactor: 0.1, // Optional: default is 0.1
+	zoomFactor: 0.1,  // Optional: default is 0.1
 	maxZoom: 15,      // Optional: default is 20
 	minZoom: 10       // Optional: default is 20
   });
@@ -41,7 +41,7 @@ The `ImageZoom` constructor accepts an options object to customize its behavior.
 - `wheelZoom`: Enable or disable zooming with the mouse wheel. Default is `true`.
 
 ## Methods
-The `ImageZoom` class provides the following methods:
+The `ImageZoom` provides the following methods:
 - `image(imageUrl)`: Change the image to the specified URL.
 - `options(options)`: Update the instance options with the provided object.
 - `zoom(zoomLevel, x, y)`: Sets the zoom level between `minZoom` and `maxZoom` values, center relative to `x` and `y`.
@@ -51,6 +51,16 @@ The `ImageZoom` class provides the following methods:
 - `position(x, y)`: Sets the position of the image relative to the container *(can only happen if image is zoomed in)*.
 - `rebuild()`: Rebuilds the zoomImage object from the initial state.
 - `destroy()`: Removes all event listeners and restores previous image state.
+
+## Events
+The `ImageZoom` events object will contain current state and option information along with pertinent information for the event.  These are the emitted events:
+- `iz.imageLoaded` : Image has been loaded.
+- `iz.positionChange` : Position change has been requested. *(will include `x` and `y` of new position)*
+- `iz.positionChanged` : Position change has been completed.
+- `iz.zoomChange` : Zoom change has been requested. *(will include `zoomLevel`, `x`, and `y` of new zoom)*
+- `iz.zoomChanged` : Image change has been completed.
+- `iz.initialized` : ImageZoom has been initialized.
+- `iz.destroyed` : ImageZoom has been destroyed.
 
 ## Whats Next?
 Here are some ideas for future enhancements:
