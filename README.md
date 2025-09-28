@@ -8,24 +8,22 @@ Check out the [demo](https://eldinocodes.github.io/ImageZoom/example) for a work
 ## Usage
 This is an example of the most basic usage for the ImageZoom.js library.
 
-1. Include the script in your html file
+1. Include the script in your html file:
 ```html
 <script src="path/to/imagezoom.js"></script>
 ```
-2. Add an image to your html file
+2. Add an image to your html file:
 ```html
 <img id="myImage" src="path/to/image.jpg" alt="Zoomable Image">
 ```
-3. Initialize the ImageZoom on the image element
-```html
-<script>
+3. Initialize the ImageZoom on the image element with some javascript:
+```javascript
   const imgElement = document.getElementById('myImage');
   const image1 = new ImageZoom(imgElement, {
 	zoomFactor: 0.1,  // Optional: default is 0.1
 	maxZoom: 15,      // Optional: default is 20
 	minZoom: 10       // Optional: default is 20
   });
-<script>	
 ```
 4. Now you can zoom in and out using the mouse wheel or touch gestures, and drag the image around.
 
