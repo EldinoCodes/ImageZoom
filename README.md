@@ -47,7 +47,7 @@ The `ImageZoom` provides the following methods:
 - `zoom(zoomLevel, x, y)`: Sets zoom level between `minZoom` and `maxZoom` values, center relative to `x` and `y`.
 - `zoomIn()`: Increases the zoom level by the `zoomFactor`.
 - `zoomOut()`: Decreases the zoom level by the `zoomFactor`.
-- `zoomFit()`: Adjusts the zoom level to fit the image within the container.
+- `imageFit()`: Adjusts the imagge to fit within the container.
 - `position(x, y)`: Sets the position of the image relative to the container *(can only happen if image is zoomed in)*.
 - `rebuild()`: Rebuilds the zoomImage object from the initial state.
 - `destroy()`: Removes all event listeners and restores previous image state.
