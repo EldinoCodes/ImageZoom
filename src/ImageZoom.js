@@ -135,6 +135,7 @@
                 }
             },
             frameResize: () => {
+                if (vars.frameObserver) vars.frameObserver.disconnect();
                 vars.frameObserver = new ResizeObserver((entries) => {
                     if (entries[0].target !== vars.frame) return;
                     fns.frameDimensions(entries[0].contentRect);
@@ -161,6 +162,7 @@
             frameRebuild: () => {
                 fns.frameDestroy();
                 fns.frameInit(vars.frame);
+                fns.optionsInit(options);
                 fns.imageUpdate();
             },
                         
