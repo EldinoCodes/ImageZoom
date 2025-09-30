@@ -26,6 +26,7 @@
             minZoom: -20,                               // min zoom level
             maxZoom: 20,                                // max zoom level 
             zoomFactor: 0.1,                            // zoom factor per zoom level
+            keyboardControl: true,                      // flag to enable keyboard control
             mouseDrag: true,                            // flag to enable mouse drag
             touchDrag: true,                            // flag to enable touch drag 
             touchZoom: true,                            // flag to enable touch pinch zoom
@@ -36,13 +37,16 @@
             frameState: undefined,                      // store initial element state for destroy
             frameObserver: undefined,                   // resize observer for frame
             frameDimensions: { width: 0, height: 0 },   // frame dimensions to calculate image size
-            imageDimensions: { width: 0, height: 0 },   // raw image dimensions
-            baseDimensions: { width: 0, height: 0 },    // base image dimensions (size to make image fit frame) as zoom level 0
-            zoomDimensions: { width: 0, height: 0 },    // zoom image dimensions for current zoom level
+            image: undefined,                           // image svg template
+            imageUrl: undefined,                        // current image url
             imagePosition: { x: 0, y: 0 },              // image position within frame, zeros if image is within frame
+            imageDimensions: { width: 0, height: 0 },   // raw image dimensions
+            imageRotation: 0,                           // image rotation in 90 degree increments
+            baseDimensions: { width: 0, height: 0 },    // base image dimensions (size to make image fit frame) as zoom level 0
+            zoomDimensions: { width: 0, height: 0 },    // zoom image dimensions for current zoom level            
+            zoomLevel: 0,                               // zoom level of the image
             dragPosition: undefined,                    // stores previous drag position for calculating drag movement
-            touchDistance: 0,                           // distance between two touch points for pinch zoom
-            zoomLevel: 0                                // zoom level of the image
+            touchDistance: 0                            // distance between two touch points for pinch zoom            
         },
         fns = {
             extend: function() {
@@ -73,6 +77,37 @@
                 return number1 > number2
                     ? number1 - number2
                     : number2 - number1;
+            },
+            imageUrlToBase64: async (imageUrl, callback) => {
+                if (!imageUrl) throw "Invalid imageUrl!";
+                if (!callback) throw "Invalid callback!";
+
+                if (imageUrl.indexOf('data:') === 0) return callback(imageUrl);
+
+                try {
+                    await fetch(imageUrl)
+                        .then(r => r.blob())
+                        .then(data => {
+                            let reader = new FileReader();
+                            reader.onloadend = () => callback(reader.result);
+                            reader.readAsDataURL(data);
+                        });
+                } catch (e) {
+                    throw e;
+                }
+            },            
+            imageGetDimensions: (imageUrl, callback) => {
+                if (!imageUrl) throw "Invalid imageUrl!";
+                if (!callback) throw "Invalid callback!";
+
+                let img = new Image();
+                img.onload = function () {
+                    callback({
+                        width: this.naturalWidth,
+                        height: this.naturalHeight
+                    });
+                }
+                img.src = imageUrl;
             },
             triggerEvent: (eventName, data) => {
                 if (!vars.frame) return;
@@ -145,7 +180,7 @@
                 vars.frameObserver.observe(vars.frame);
             },
             frameDestroy: () => {
-                vars.frame.src = vars.frameState.src;
+                vars.frame.src = vars.frameState.src;                
                 vars.frame.style.backgroundImage = vars.frameState.backgroundImage;
                 vars.frame.style.backgroundSize = vars.frameState.backgroundSize;
                 vars.frame.style.backgroundPosition = vars.frameState.backgroundPosition;
@@ -170,17 +205,17 @@
                 if (!imageUrl) throw "Invalid imageUrl!";
 
                 opts.imageUrl = imageUrl;
+                vars.imageUrl = imageUrl;
 
-                let img = new Image();
-                img.onload = function () {
-                    vars.imageDimensions = {
-                        width: this.naturalWidth,
-                        height: this.naturalHeight
-                    };
-                    fns.imageFit();
-                    fns.triggerEvent('iz.imageLoaded');
-                };
-                img.src = opts.imageUrl;
+                fns.imageUrlToBase64(vars.imageUrl, (base64) => {
+                    fns.imageGetDimensions(base64, (dimensions) => {
+                        vars.image = base64;
+                        vars.imageDimensions = dimensions;
+
+                        fns.imageFit();
+                        fns.triggerEvent('iz.imageLoaded');
+                    });
+                });
             },
             imagePosition: (x, y) => {
                 fns.triggerEvent('iz.positionChange', { x: x, y: y });
@@ -234,19 +269,44 @@
                 vars.zoomLevel = level;
                 vars.zoomDimensions.width = width;
                 vars.zoomDimensions.height = height;
-
-                fns.triggerEvent('iz.zoomChanged');
-
+                
                 fns.imagePosition(
                     offsetX - (vars.zoomDimensions.width * ratioX),
                     offsetY - (vars.zoomDimensions.height * ratioY)
-                );                
+                );
+                fns.triggerEvent('iz.zoomChanged');
             },
             imageZoomIn: () => {
                 fns.imageZoom(vars.zoomLevel + 1);
             },
             imageZoomOut: () => {
                 fns.imageZoom(vars.zoomLevel - 1);
+            },
+            imageRotate: (rotateIndex) => {
+                let rotation = [0, 90, 180, 270],
+                    realIndex = (rotateIndex % 4),
+                    degrees = rotation[realIndex];
+
+                fns.triggerEvent('iz.rotationChange', { rotation: realIndex, degrees: degrees });
+
+                vars.imageRotation = realIndex;
+                if (realIndex != 0) {
+                    let img = `<image href="${vars.image}" x="0" y="0" width="${vars.imageDimensions.width}" height="${vars.imageDimensions.height}" />`,
+                        svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${vars.imageDimensions.width}" height="${vars.imageDimensions.height}" style="transform:rotate(${degrees}deg);">${img}</svg>`;
+                    vars.imageUrl = `data:image/svg+xml;base64,${btoa(svg)}`;
+                } else {
+                    vars.imageUrl = opts.imageUrl;
+                }
+
+                fns.imageUpdate();
+
+                fns.triggerEvent('iz.rotationChanged', { rotation: realIndex, degrees: degrees });
+            },
+            imageRotateLeft: () => {
+                fns.imageRotate(vars.imageRotation - 1);
+            },
+            imageRotateRight: () => {
+                fns.imageRotate(vars.imageRotation + 1);
             },
             imageUpdate: () => {
                 let minX = vars.frameDimensions.width - vars.zoomDimensions.width,
@@ -268,11 +328,11 @@
                 }
                 vars.frame.src = emptySvgUri;
                 vars.frame.style.backgroundRepeat = 'no-repeat';
-                vars.frame.style.backgroundImage = 'url("' + opts.imageUrl + '")';
+                vars.frame.style.backgroundImage = 'url("' + vars.imageUrl + '")';
                 vars.frame.style.backgroundSize = vars.zoomDimensions.width + 'px ' + vars.zoomDimensions.height + 'px';
                 vars.frame.style.backgroundPosition = vars.imagePosition.x + 'px ' + vars.imagePosition.y + 'px';
             },
-
+            
             optionsInit: (o) => {
                 if (!o) return;
 
@@ -280,13 +340,38 @@
 
                 if (o.imageUrl) fns.imageInit(opts.imageUrl);
 
-                fns.bindWheel();
+                fns.bindKeyboard();                
                 fns.bindMouse();
+                fns.bindWheel();
                 fns.bindTouch();
+            },
+
+            bindKeyboard: () => {
+                if (!opts.keyboardControl) return;
+                fns.unbindKeyboard();
+                document.addEventListener('keydown', fns.onKeyboard, { passive: false });
+            },
+            onKeyboard: (e) => {
+                switch (e.key) {
+                    case '+':
+                    case 'PageUp': fns.imageZoomIn(); break;
+                    case '-':
+                    case 'PageDown': fns.imageZoomOut(); break;
+                    case '0':
+                    case 'Home': fns.imageFit(); break;
+                    case 'ArrowUp': fns.imagePosition(vars.imagePosition.x, vars.imagePosition.y + 10); break;
+                    case 'ArrowDown': fns.imagePosition(vars.imagePosition.x, vars.imagePosition.y - 10); break;
+                    case 'ArrowLeft': fns.imagePosition(vars.imagePosition.x + 10, vars.imagePosition.y); break;
+                    case 'ArrowRight': fns.imagePosition(vars.imagePosition.x - 10, vars.imagePosition.y); break;
+                }
+            },
+            unbindKeyboard: () => {
+                document.removeEventListener('keydown', fns.onKeyboard, { passive: false });
             },
 
             bindMouse: () => {
                 if (!opts.mouseDrag) return;
+                fns.unbindMouse();
                 vars.frame.addEventListener('mousedown', fns.onMouseDown, { passive: false });
             },
             onMouseDown: (e) => {
@@ -315,8 +400,27 @@
             unbindMouse: () => {
                 vars.frame.removeEventListener('mousedown', fns.onMouseDown, { passive: false });
             },
+            
+            bindWheel: () => {
+                if (!opts.wheelZoom) return;
+                fns.unbindWheel();
+                vars.frame.addEventListener('wheel', fns.onWheel, { passive: false });
+            },
+            onWheel: (e) => {
+                let delta = e.deltaY || -e.wheelDelta || 0;
+                if (delta === 0) return;
 
-            bindTouch: () => {                
+                let rect = vars.frame.getBoundingClientRect(),
+                    zoomLevel = vars.zoomLevel += delta < 0 ? 1 : -1;
+
+                fns.imageZoom(zoomLevel, e.pageX - rect.left, e.pageY - rect.top);
+            },
+            unbindWheel: () => {
+                vars.frame.removeEventListener('wheel', fns.onWheel, { passive: false });
+            },
+
+            bindTouch: () => {
+                fns.unbindTouch();
                 vars.frame.addEventListener("touchstart", fns.onTouchStart, { passive: false });
             },
             onTouchStart: (e) => {
@@ -363,23 +467,6 @@
             unbindTouch: () => {
                 vars.frame.removeEventListener('touchstart', fns.onTouchStart, { passive: false });
             },
-
-            bindWheel: () => {
-                if (!opts.wheelZoom) return;
-                vars.frame.addEventListener('wheel', fns.onWheel, { passive: false });
-            },
-            onWheel: (e) => {
-                let delta = e.deltaY || -e.wheelDelta || 0;
-                if (delta === 0) return;
-
-                let rect = vars.frame.getBoundingClientRect(),
-                    zoomLevel = vars.zoomLevel += delta < 0 ? 1 : -1;
-
-                fns.imageZoom(zoomLevel, e.pageX - rect.left, e.pageY - rect.top);
-            },
-            unbindWheel: () => {
-                vars.frame.removeEventListener('wheel', fns.onWheel, { passive: false });
-            }
         };
 
         fns.frameInit(element);
@@ -392,6 +479,8 @@
             zoomIn: fns.imageZoomIn,
             zoomOut: fns.imageZoomOut,
             zoomFit: fns.imageFit,
+            rotateLeft: fns.imageRotateLeft,
+            rotateRight: fns.imageRotateRight,
             position: fns.imagePosition,
             rebuild: fns.frameRebuild,
             destroy: fns.frameDestroy

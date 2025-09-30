@@ -33,6 +33,7 @@ The `ImageZoom` constructor accepts an options object to customize its behavior.
 - `minZoom`: The minimum zoom level. Default is `-20`.
 - `maxZoom`: The maximum zoom level. Default is `20`.
 - `zoomFactor`: The amount to zoom in or out with each scroll or pinch. Default is `0.1`.
+- `keyboardControl`: Enable or disable keyboard controls. Default is `true`.
 - `mouseDrag`: Enable or disable dragging with the mouse. Default is `true`.
 - `touchDrag`: Enable or disable dragging with touch. Default is `true`.
 - `touchZoom`: Enable or disable zooming with touch gestures. Default is `true`.
@@ -40,13 +41,15 @@ The `ImageZoom` constructor accepts an options object to customize its behavior.
 
 ## Methods
 The `ImageZoom` provides the following methods:
-- `image(imageUrl)`: Change the image to the specified URL.
 - `options(options)`: Update the instance options with the provided object.
+- `image(imageUrl)`: Change the image to the specified URL.
+- `imageFit()`: Adjusts the imagge to fit within the container and resets base zoom to match.
+- `position(x, y)`: Sets the position of the image relative to the container *(can only happen if image is zoomed in)*.
+- `rotateLeft()`: Rotates the image 90 degrees to the left.
+- `rotateRight()`: Rotates the image 90 degrees to the right.
 - `zoom(zoomLevel, x, y)`: Sets zoom level between `minZoom` and `maxZoom` values, center relative to `x` and `y`.
 - `zoomIn()`: Increases the zoom level by the `zoomFactor`.
 - `zoomOut()`: Decreases the zoom level by the `zoomFactor`.
-- `imageFit()`: Adjusts the imagge to fit within the container.
-- `position(x, y)`: Sets the position of the image relative to the container *(can only happen if image is zoomed in)*.
 - `rebuild()`: Rebuilds the zoomImage object from the initial state.
 - `destroy()`: Removes all event listeners and restores previous image state.
 
@@ -57,13 +60,19 @@ The `ImageZoom` events object will contain current state and option information 
 - `iz.positionChanged` : Position change has been completed.
 - `iz.zoomChange` : Zoom change has been requested. *(will include `zoomLevel`, `x`, and `y` of new zoom)*
 - `iz.zoomChanged` : Image change has been completed.
+- `iz.rotateChange` : Rotate change has been requested. *(will include `rotationLevel`, and `degrees` of rotation)*
+- `iz.rotateChanged` : Rotate change has been completed.
 - `iz.initialized` : ImageZoom has been initialized.
 - `iz.destroyed` : ImageZoom has been destroyed.
 
 ## Whats Next?
 Here are some ideas for future enhancements:
-- known bug with imageFit not working correctly when image is portrait but container is landscape.
-- add bindings for plugin events (zoom, drag, etc).
+- Add image save functionality to allow reorienting images before save.
+
+## Notes
+`ImageZoom` works by taking an image element and moving the `src` to the element `background-image` CSS property and replacing the `src` property with a empty svg base64 image.  All image manipulation is done against the `background-image` of the dom element.  This allows for complex functionality without needing to modify the dom structure at all.
+Known issues:
+- due to how `ImageZoom` handles image manipulation, to achieve rotation we have to fetch an image, convert it to base64 and then embed that into a svg which is then converted into base64 and is slipped into the `background-image` CSS property.  Due to this, when any image is rotated it can cause both memory issues with large images and slows down general interaction.
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
