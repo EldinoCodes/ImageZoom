@@ -416,5 +416,3 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
-/dist/ImageZoom.js
-/dist/ImageZoom.min.js
