@@ -78,10 +78,6 @@ The `ImageZoom` events object will contain current state and option information 
 - `iz.initialized` : ImageZoom has been initialized.
 - `iz.destroyed` : ImageZoom has been destroyed.
 
-## Whats Next?
-Here are some ideas for future enhancements:
-- Add image save functionality to allow reorienting images before save.
-
 ## Notes
 `ImageZoom` works by taking an image element and moving the `src` into a canvas generated blob and referencing that blob as the element `background-image` CSS property, then replacing the `src` property with a empty svg base64 image.  All image manipulation is done against the underlying canvas where the blob is manipulated and `background-image` of the dom element is updated.  This allows for complex functionality without needing to modify the dom structure at all.
 

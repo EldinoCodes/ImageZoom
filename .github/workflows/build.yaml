@@ -1,0 +1,25 @@
+on:
+  push:
+    branches:
+      - main # Or your desired branch
+
+jobs:
+  minify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      - name: Install Terser
+        run: npm install -g terser
+      - name: Copy file within repo
+        run: cp ./src/ImageZoom.js ./dist/ImageZoom.js
+      - name: Minify JavaScript
+        run: terser ./src/ImageZoom.js --compress -o ./dist/ImageZoom.min.js
+      - name: Auto commit minified files
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Build dist folder"
