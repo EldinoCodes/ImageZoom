@@ -16,11 +16,11 @@ jobs:
       - name: Install Terser
         run: npm install -g terser
       - name: Create dist directory
-        run: mkdir -p dist
+        run: mkdir -p ./dist
       - name: Copy file within repo
-        run: cp src/ImageZoom.js dist/ImageZoom.js
+        run: cp ./src/ImageZoom.js ./dist/ImageZoom.js
       - name: Minify JavaScript
-        run: terser src/ImageZoom.js --compress -o dist/ImageZoom.min.js
+        run: terser ./src/ImageZoom.js --compress -o ./dist/ImageZoom.min.js
       - name: Auto commit minified files
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
