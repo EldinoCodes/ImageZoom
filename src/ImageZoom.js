@@ -237,6 +237,8 @@
             imageInit: (imageUrl) =>  {
                 if (!imageUrl) throw "Invalid imageUrl!";
 
+                if (opts.imageUrl != imageUrl) opts.imageUrl = imageUrl;
+
                 fns.imageLoad(imageUrl, () => {
                     let base64 = fns.canvasToBase64();
 
