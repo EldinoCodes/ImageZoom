@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
@@ -11,6 +11,7 @@
     <link rel="icon" class="js-site-favicon" type="image/svg+xml" href="https://github.githubassets.com/favicons/favicon-dark.svg" data-base-href="https://github.githubassets.com/favicons/favicon">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css">
     <style>
         body {
             display: grid;
@@ -21,7 +22,7 @@
                 "bottomnav";
             width: 100vw;
             height: 100vh;
-            padding-bottom:50px;
+            padding-bottom: 50px;
         }
 
         #top-nav {
@@ -31,23 +32,36 @@
         #main {
             grid-area: main;
             display: grid;
-            grid-template-rows: auto 1fr auto;
-            grid-template-areas: "imageselector" "image" "imagecontrols";
+            grid-template-rows: auto 1fr;
+            grid-template-areas: "imageselector" "imagecontainer";
         }
 
         #bottom-nav {
             grid-area: bottomnav;
         }
 
+        #imageContainer {
+            grid-area: imagecontainer;
+            position: relative;
+        }
+
         #image {
-            grid-area: image;
             width: 100%;
             height: 100%;
         }
 
         #imageControls {
-            grid-area: imagecontrols;
+            position: absolute;
+            bottom: .3rem;
+            right: .3rem;
+            background-color: rgba(200, 200, 200, .8);
+            border-radius: 1rem;
         }
+
+            #imageControls .btn {
+                min-width: 2rem;
+                min-height: 2rem;
+            }
 
         #imageSelector {
             grid-area: imageselector;
@@ -62,7 +76,7 @@
 <body>
     <header id="top-nav" class="border-bottom">
         <nav class="navbar">
-            <div class="container justify-content-between">                
+            <div class="container justify-content-between">
                 <h2>EldinoCodes</h2>
                 <h3>ImageZoom.js</h3>
             </div>
@@ -75,13 +89,29 @@
             <img src="sample2.png" alt="Sample Image 2" />
             <img src="sample3.png" alt="Sample Image 3" />
         </div>
-        <img id="image" class="mx-auto border" src="sample1.png" alt="Sample Image" />
-        <div id="imageControls" class="d-flex justify-content-center">
-            <button id="zoomOut" class="btn btn-sm btn-secondary" onclick="imageZoom.zoomOut()">-</button>
-            &nbsp;
-            <button id="zoom" class="btn btn-sm btn-secondary" onclick="imageZoom.zoom(0)">&#x21bb;</button>
-            &nbsp;
-            <button id="zoomIn" class="btn btn-sm btn-secondary" onclick="imageZoom.zoomIn()">+</button>
+        <div id="imageContainer">
+            <img id="image" class="mx-auto border" src="sample1.png" alt="Sample Image" />
+            <div id="imageControls" class="d-flex flex-column p-1 d-none d-md-block">
+                <div class="d-flex justify-content-center">
+                    <button id="imageZoomOut" class="btn btn-sm btn-secondary m-1" onclick="imageZoom.imageZoomOut()"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                    <button id="imageMoveUp" class="btn btn-sm btn-secondary m-1" onclick="imageZoom.imageMoveUp()"><i class="fa-solid fa-arrow-up"></i></button>
+                    <button id="imageZoomIn" class="btn btn-sm btn-secondary m-1" onclick="imageZoom.imageZoomIn()"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                </div>
+                <div class="d-flex justify-content-center">
+                    <button id="imageMoveLeft" class="btn btn-sm btn-secondary m-1" onclick="imageZoom.imageMoveLeft()"><i class="fa-solid fa-arrow-left"></i></button>
+                    <button id="imageFit" class="btn btn-sm btn-secondary m-1" onclick="imageZoom.imageFit()"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>
+                    <button id="imageMoveRight" class="btn btn-sm btn-secondary m-1" onclick="imageZoom.imageMoveRight()"><i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+                <div class="d-flex justify-content-center">
+                    <button id="imageRotateLeft" class="btn btn-sm btn-secondary m-1" onclick="imageZoom.imageRotateLeft()"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button id="imageMoveDown" class="btn btn-sm btn-secondary m-1" onclick="imageZoom.imageMoveDown()"><i class="fa-solid fa-arrow-down"></i></button>
+                    <button id="imageRotateRight" class="btn btn-sm btn-secondary m-1" onclick="imageZoom.imageRotateRight()"><i class="fa-solid fa-rotate-right"></i></button>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <button id="imageReset" class="btn btn-sm btn-secondary m-1" onclick="imageZoom.imageReset()"><i class="fa-solid fa-arrow-rotate-right"></i></button>
+                    <button id="imageExport" class="btn btn-sm btn-secondary m-1" onclick="imageZoom.imageExport()"><i class="fa-solid fa-file-arrow-down"></i></button>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -96,6 +126,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/js/all.min.js"></script>
     <script src="../src/ImageZoom.js"></script>
     <script>
         let element = document.querySelector("#image");

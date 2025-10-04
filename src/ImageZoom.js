@@ -37,10 +37,12 @@
             frameState: undefined,                      // store initial element state for destroy
             frameObserver: undefined,                   // resize observer for frame
             frameDimensions: { width: 0, height: 0 },   // frame dimensions to calculate image size
-            image: undefined,                           // image svg template
+            canvas: undefined,                          // canvas for image manipulation
+            context: undefined,                         // canvas 2d context
+            image: undefined,                           // image base64
             imageUrl: undefined,                        // current image url
+            imageDimensions: { width: 0, height: 0 },   // image dimensions
             imagePosition: { x: 0, y: 0 },              // image position within frame, zeros if image is within frame
-            imageDimensions: { width: 0, height: 0 },   // raw image dimensions
             imageRotation: 0,                           // image rotation in 90 degree increments
             baseDimensions: { width: 0, height: 0 },    // base image dimensions (size to make image fit frame) as zoom level 0
             zoomDimensions: { width: 0, height: 0 },    // zoom image dimensions for current zoom level            
@@ -78,36 +80,19 @@
                     ? number1 - number2
                     : number2 - number1;
             },
-            imageUrlToBase64: async (imageUrl, callback) => {
-                if (!imageUrl) throw "Invalid imageUrl!";
-                if (!callback) throw "Invalid callback!";
-
-                if (imageUrl.indexOf('data:') === 0) return callback(imageUrl);
-
-                try {
-                    await fetch(imageUrl)
-                        .then(r => r.blob())
-                        .then(data => {
-                            let reader = new FileReader();
-                            reader.onloadend = () => callback(reader.result);
-                            reader.readAsDataURL(data);
-                        });
-                } catch (e) {
-                    throw e;
+            imageGetObjectUrl: (imageUrl, base64) => {
+                URL.revokeObjectURL(imageUrl);
+                if (!base64) return;
+                let imageArray = base64.split(','),
+                    mime = imageArray[0].match(/:(.*?);/)[1],
+                    decoded = atob(imageArray[1]),
+                    idx = decoded.length,
+                    dataArray = new Uint8Array(idx);
+                while (idx--) {
+                    dataArray[idx] = decoded.charCodeAt(idx);
                 }
-            },            
-            imageGetDimensions: (imageUrl, callback) => {
-                if (!imageUrl) throw "Invalid imageUrl!";
-                if (!callback) throw "Invalid callback!";
-
-                let img = new Image();
-                img.onload = function () {
-                    callback({
-                        width: this.naturalWidth,
-                        height: this.naturalHeight
-                    });
-                }
-                img.src = imageUrl;
+                let blob = new Blob([dataArray], { type: mime });
+                return URL.createObjectURL(blob);
             },
             triggerEvent: (eventName, data) => {
                 if (!vars.frame) return;
@@ -126,6 +111,7 @@
                     state: {
                         imagePosition: vars.imagePosition,
                         imageDimensions: vars.imageDimensions,
+                        imageRotation: vars.imageRotation,
                         frameDimensions: vars.frameDimensions,
                         zoomDimensions: vars.zoomDimensions,
                         zoomLevel: vars.zoomLevel
@@ -133,6 +119,51 @@
                 }, data || {});
                 let event = new CustomEvent(eventName, { detail: eventData });
                 vars.frame.dispatchEvent(event);
+            },
+
+            canvasInit: () => {
+                vars.canvas = vars.canvas || document.createElement('canvas');
+                vars.context = vars.canvas.getContext('2d');
+            },
+            canvasClear: () => {
+                vars.context.clearRect(0, 0, vars.canvas.width, vars.canvas.height);
+            },
+            canvasImageLoad: () => {
+                if (!vars.image) return;
+
+                vars.canvas.width = vars.image.naturalWidth;
+                vars.canvas.height = vars.image.naturalHeight;
+
+                vars.context.restore();
+                vars.context.drawImage(vars.image, 0, 0, vars.canvas.width, vars.canvas.height);
+                vars.context.save();
+            },
+            canvasImageRotate: (rotateIndex, callback) => {
+                let realIndex = [0, 1, 2, 3].at(rotateIndex % 4),
+                    radians = realIndex * (Math.PI / 2),
+                    altView = realIndex % 2 != 0;
+
+                vars.canvas.width = altView ? vars.image.naturalHeight : vars.image.naturalWidth;
+                vars.canvas.height = altView ? vars.image.naturalWidth : vars.image.naturalHeight;
+
+                vars.context.save();
+
+                switch(realIndex)
+                {
+                    case 0: vars.context.translate(0, 0); break;
+                    case 1: vars.context.translate(vars.canvas.width, 0); break;
+                    case 2: vars.context.translate(vars.canvas.width, vars.canvas.height); break;
+                    case 3: vars.context.translate(0, vars.canvas.height); break;                    
+                }
+                vars.context.rotate(radians);
+                vars.context.drawImage(vars.image, 0, 0);
+
+                vars.context.restore();
+
+                if(callback) callback();
+            },
+            canvasToBase64: () => {
+                return vars.canvas.toDataURL('image/png');
             },
 
             frameInit: (element) => {
@@ -146,7 +177,7 @@
                 if (vars.frame.src !== '')
                     options = fns.extend(true, opts, { imageUrl: vars.frame.src }, options || {});
 
-                vars.frame.src = emptySvgUri;
+                vars.frame.src = emptySvgUri
 
                 fns.frameDimensions();
                 fns.frameResize();
@@ -180,6 +211,8 @@
                 vars.frameObserver.observe(vars.frame);
             },
             frameDestroy: () => {
+                fns.imageGetObjectUrl(vars.imageUrl);
+
                 vars.frame.src = vars.frameState.src;                
                 vars.frame.style.backgroundImage = vars.frameState.backgroundImage;
                 vars.frame.style.backgroundSize = vars.frameState.backgroundSize;
@@ -200,23 +233,40 @@
                 fns.optionsInit(options);
                 fns.imageUpdate();
             },
-                        
+
             imageInit: (imageUrl) =>  {
                 if (!imageUrl) throw "Invalid imageUrl!";
 
-                opts.imageUrl = imageUrl;
-                vars.imageUrl = imageUrl;
+                fns.imageLoad(imageUrl, () => {
+                    let base64 = fns.canvasToBase64();
 
-                fns.imageUrlToBase64(vars.imageUrl, (base64) => {
-                    fns.imageGetDimensions(base64, (dimensions) => {
-                        vars.image = base64;
-                        vars.imageDimensions = dimensions;
+                    vars.imageUrl = fns.imageGetObjectUrl(vars.imageUrl, base64);
 
-                        fns.imageFit();
-                        fns.triggerEvent('iz.imageLoaded');
-                    });
+                    fns.imageFit();
                 });
             },
+            imageLoad: (imageUrl, callback) => {
+                /// load image obj, store image dimensions and draw to canvas
+                if (!imageUrl) throw "Invalid imageUrl!";
+                if (!callback) throw "Invalid callback!";
+
+                vars.image = new Image();
+                vars.image.onerror = function () {
+                    console.error("Error loading image:", imageUrl);
+                    vars.image.src = emptySvgUri;
+                };
+                vars.image.onload = function () {                    
+                    vars.imageDimensions = {
+                        width: this.naturalWidth,
+                        height: this.naturalHeight
+                    };
+                    vars.imagePosition = { x: 0, y: 0 };
+                    vars.imageRotation = 0;
+                    fns.canvasImageLoad();
+                    callback();
+                }
+                vars.image.src = imageUrl;
+            },            
             imagePosition: (x, y) => {
                 fns.triggerEvent('iz.positionChange', { x: x, y: y });
                 vars.imagePosition.x = x;
@@ -224,19 +274,34 @@
                 fns.imageUpdate();
                 fns.triggerEvent('iz.positionChanged');                
             },
+            imagePositionUp: () => {
+                fns.imagePosition(vars.imagePosition.x, vars.imagePosition.y + 10);
+            }                    ,
+            imagePositionDown: () => {
+                fns.imagePosition(vars.imagePosition.x, vars.imagePosition.y - 10);
+            },
+            imagePositionLeft: () => {
+                fns.imagePosition(vars.imagePosition.x + 10, vars.imagePosition.y);
+            },
+            imagePositionRight: () => {
+                fns.imagePosition(vars.imagePosition.x - 10, vars.imagePosition.y);
+            },
             imageCenter: () => {
                 fns.imagePosition(
                     (vars.frameDimensions.width - vars.zoomDimensions.width) / 2,
                     (vars.frameDimensions.height - vars.zoomDimensions.height) / 2
                 );
             },
+            imageReset: () => {
+                fns.imageInit(opts.imageUrl);
+            },
             imageFit: () => {
                 let scale = Math.min(
                     vars.frameDimensions.width / vars.imageDimensions.width,
                     vars.frameDimensions.height / vars.imageDimensions.height
                 );
-                vars.baseDimensions.height = vars.imageDimensions.height * scale;
                 vars.baseDimensions.width = vars.imageDimensions.width * scale;
+                vars.baseDimensions.height = vars.imageDimensions.height * scale;
                 vars.zoomDimensions = {
                     width: vars.baseDimensions.width,
                     height: vars.baseDimensions.height
@@ -290,17 +355,19 @@
                 fns.triggerEvent('iz.rotationChange', { rotation: realIndex, degrees: degrees });
 
                 vars.imageRotation = realIndex;
-                if (realIndex != 0) {
-                    let img = `<image href="${vars.image}" x="0" y="0" width="${vars.imageDimensions.width}" height="${vars.imageDimensions.height}" />`,
-                        svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${vars.imageDimensions.width}" height="${vars.imageDimensions.height}" style="transform:rotate(${degrees}deg);">${img}</svg>`;
-                    vars.imageUrl = `data:image/svg+xml;base64,${btoa(svg)}`;
-                } else {
-                    vars.imageUrl = opts.imageUrl;
-                }
 
-                fns.imageUpdate();
+                fns.canvasImageRotate(realIndex, () => {
+                    let base64 = fns.canvasToBase64();
+                    vars.imageDimensions = {
+                        width: vars.canvas.width,
+                        height: vars.canvas.height
+                    };
+                    vars.imageUrl = fns.imageGetObjectUrl(vars.imageUrl, base64);
 
-                fns.triggerEvent('iz.rotationChanged', { rotation: realIndex, degrees: degrees });
+                    fns.imageFit();
+
+                    fns.triggerEvent('iz.rotationChanged', { rotation: realIndex, degrees: degrees });
+                });
             },
             imageRotateLeft: () => {
                 fns.imageRotate(vars.imageRotation - 1);
@@ -332,6 +399,14 @@
                 vars.frame.style.backgroundSize = vars.zoomDimensions.width + 'px ' + vars.zoomDimensions.height + 'px';
                 vars.frame.style.backgroundPosition = vars.imagePosition.x + 'px ' + vars.imagePosition.y + 'px';
             },
+            imageExport: (fileName) => {
+                let aTag = document.createElement('a');
+                aTag.href = vars.imageUrl;
+                aTag.download = fileName || 'image.png';
+                document.body.appendChild(aTag);
+                aTag.click();
+                document.body.removeChild(aTag);
+            },
             
             optionsInit: (o) => {
                 if (!o) return;
@@ -340,7 +415,7 @@
 
                 if (o.imageUrl) fns.imageInit(opts.imageUrl);
 
-                fns.bindKeyboard();                
+                fns.bindKeyboard();
                 fns.bindMouse();
                 fns.bindWheel();
                 fns.bindTouch();
@@ -359,10 +434,10 @@
                     case 'PageDown': fns.imageZoomOut(); break;
                     case '0':
                     case 'Home': fns.imageFit(); break;
-                    case 'ArrowUp': fns.imagePosition(vars.imagePosition.x, vars.imagePosition.y + 10); break;
-                    case 'ArrowDown': fns.imagePosition(vars.imagePosition.x, vars.imagePosition.y - 10); break;
-                    case 'ArrowLeft': fns.imagePosition(vars.imagePosition.x + 10, vars.imagePosition.y); break;
-                    case 'ArrowRight': fns.imagePosition(vars.imagePosition.x - 10, vars.imagePosition.y); break;
+                    case 'ArrowUp': fns.imagePositionUp(); break;
+                    case 'ArrowDown': fns.imagePositionDown(); break;
+                    case 'ArrowLeft': fns.imagePositionLeft(); break;
+                    case 'ArrowRight': fns.imagePositionRight(); break;
                 }
             },
             unbindKeyboard: () => {
@@ -469,19 +544,31 @@
             },
         };
 
+        fns.canvasInit();
         fns.frameInit(element);
         fns.optionsInit(options);
 
         return {
             image: fns.imageInit,
-            options: fns.optionsInit,
-            zoom: fns.imageZoom,
-            zoomIn: fns.imageZoomIn,
-            zoomOut: fns.imageZoomOut,
-            zoomFit: fns.imageFit,
-            rotateLeft: fns.imageRotateLeft,
-            rotateRight: fns.imageRotateRight,
-            position: fns.imagePosition,
+            imageFit: fns.imageFit,
+            imageReset: fns.imageReset,            
+            imageExport: fns.imageExport,
+
+            imagePosition: fns.imagePosition,
+            imageMoveUp: fns.imagePositionUp,
+            imageMoveDown: fns.imagePositionDown,
+            imageMoveLeft: fns.imagePositionLeft,
+            imageMoveRight: fns.imagePositionRight,
+
+            imageZoom: fns.imageZoom,
+            imageZoomIn: fns.imageZoomIn,
+            imageZoomOut: fns.imageZoomOut,
+
+            imageRotate: fns.imageRotate,
+            imageRotateLeft: fns.imageRotateLeft,
+            imageRotateRight: fns.imageRotateRight,
+
+            options: fns.optionsInit,            
             rebuild: fns.frameRebuild,
             destroy: fns.frameDestroy
         };

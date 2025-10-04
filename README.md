@@ -3,7 +3,7 @@ ImageZoom.js is a simple javascript library to implement image zoom and drag.  I
 
 Currently this project supports mouse and touch events on both desktop and mobile platforms.  The intention is to keep this library as simple and concise as possible and not depend on any other libraries.  This is so people can read through the code and understand how it works.
 
-Check out the [demo](https://eldinocodes.github.io/ImageZoom/example) for a working example.
+Check out the [Demo](https://eldinocodes.github.io/ImageZoom/example) for a working example.
 
 ## Usage
 This is an example of the most basic usage for the ImageZoom.js library.
@@ -41,17 +41,30 @@ The `ImageZoom` constructor accepts an options object to customize its behavior.
 
 ## Methods
 The `ImageZoom` provides the following methods:
-- `options(options)`: Update the instance options with the provided object.
 - `image(imageUrl)`: Change the image to the specified URL.
 - `imageFit()`: Adjusts the imagge to fit within the container and resets base zoom to match.
-- `position(x, y)`: Sets the position of the image relative to the container *(can only happen if image is zoomed in)*.
-- `rotateLeft()`: Rotates the image 90 degrees to the left.
-- `rotateRight()`: Rotates the image 90 degrees to the right.
-- `zoom(zoomLevel, x, y)`: Sets zoom level between `minZoom` and `maxZoom` values, center relative to `x` and `y`.
-- `zoomIn()`: Increases the zoom level by the `zoomFactor`.
-- `zoomOut()`: Decreases the zoom level by the `zoomFactor`.
+- `imageReset()`: Resets image to original state.
+- `imageExport(fileName)` : Allow export of the image with current rotation applied.
+
+- `imagePosition(x, y)`: Sets the position of the image relative to the container.
+- `imageMoveUp()`: Moves the position of the image up.
+- `imageMoveDown()`:  Moves the position of the image down.
+- `imageMoveLeft()`:  Moves the position of the image left.
+- `imageMoveRight()`: Moves the position of the image right.
+
+- `imageZoom(zoomLevel, x, y)`: Sets zoom level between `minZoom` and `maxZoom` values, center relative to `x` and `y`.
+- `imageZoomIn()`: Increases the zoom level by the `zoomFactor`.
+- `imageZoomOut()`: Decreases the zoom level by the `zoomFactor`.
+
+- `imageRotate(rotationIndex)`: Rotates the image by `rotationIndex`, [0, 90, 180, 270] degrees to the left.
+- `imageRotateLeft()`: Rotates the image 90 degrees to the left.
+- `imageRotateRight()`: Rotates the image 90 degrees to the right.
+
+- `options(options)`: Update the instance options with the provided object.
 - `rebuild()`: Rebuilds the zoomImage object from the initial state.
 - `destroy()`: Removes all event listeners and restores previous image state.
+
+<span style='color:orange'>* *Position methods can only fire if image is larger than the frame i.e. zoomed in*</span>
 
 ## Events
 The `ImageZoom` events object will contain current state and option information along with pertinent information for the event.  These are the emitted events:
@@ -70,9 +83,7 @@ Here are some ideas for future enhancements:
 - Add image save functionality to allow reorienting images before save.
 
 ## Notes
-`ImageZoom` works by taking an image element and moving the `src` to the element `background-image` CSS property and replacing the `src` property with a empty svg base64 image.  All image manipulation is done against the `background-image` of the dom element.  This allows for complex functionality without needing to modify the dom structure at all.
-Known issues:
-- due to how `ImageZoom` handles image manipulation, to achieve rotation we have to fetch an image, convert it to base64 and then embed that into a svg which is then converted into base64 and is slipped into the `background-image` CSS property.  Due to this, when any image is rotated it can cause both memory issues with large images and slows down general interaction.
+`ImageZoom` works by taking an image element and moving the `src` into a canvas generated blob and referencing that blob as the element `background-image` CSS property, then replacing the `src` property with a empty svg base64 image.  All image manipulation is done against the underlying canvas where the blob is manipulated and `background-image` of the dom element is updated.  This allows for complex functionality without needing to modify the dom structure at all.
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
