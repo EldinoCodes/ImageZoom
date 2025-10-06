@@ -403,7 +403,7 @@
             },
             imageExport: (fileName) => {
                 fileName = fileName || 'image';
-                fileName += fileName.split('.').shift() + ".png";                    
+                fileName += fileName.split('.').shift() + '.png';                    
                 let aTag = document.createElement('a');
                 aTag.href = vars.imageUrl;
                 aTag.download = fileName;
