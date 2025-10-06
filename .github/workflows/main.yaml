@@ -33,6 +33,10 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Build dist folder"
+          commit_options: '--no-verify --signoff'
+          push_options: '--force'
+          skip_checkout: true
+          branch: master
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Build with Jekyll
