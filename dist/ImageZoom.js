@@ -278,7 +278,7 @@
             },
             imagePositionUp: () => {
                 fns.imagePosition(vars.imagePosition.x, vars.imagePosition.y + 10);
-            }                    ,
+            },
             imagePositionDown: () => {
                 fns.imagePosition(vars.imagePosition.x, vars.imagePosition.y - 10);
             },
@@ -402,9 +402,11 @@
                 vars.frame.style.backgroundPosition = vars.imagePosition.x + 'px ' + vars.imagePosition.y + 'px';
             },
             imageExport: (fileName) => {
+                fileName = fileName || 'image';
+                fileName += fileName.split('.').shift() + '.png';                    
                 let aTag = document.createElement('a');
                 aTag.href = vars.imageUrl;
-                aTag.download = fileName || 'image.png';
+                aTag.download = fileName;
                 document.body.appendChild(aTag);
                 aTag.click();
                 document.body.removeChild(aTag);
