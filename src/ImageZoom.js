@@ -205,7 +205,7 @@
                 vars.frameObserver = new ResizeObserver((entries) => {
                     if (entries[0].target !== vars.frame) return;
                     fns.frameDimensions(entries[0].contentRect);
-                    fns.imageUpdate();
+                    fns.imageFit();
                     fns.triggerEvent('iz.imageResize');
                 });
                 vars.frameObserver.observe(vars.frame);
